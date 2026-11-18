@@ -11,7 +11,7 @@ pipeline {
     }
     environment {
         STUDENT_ID = 'FA23-BDS-048'
-        IMAGE      = 'midterm-fa23-bds-048'
+        IMAGE      = 'ahmadkhan0901/midterm-fa23-bds-048'
         CONTAINER  = 'midterm-app'
         APP_URL    = 'http://52.64.85.224:8000'
         NOTIFY_TO  = 'qasimalik@gmail.com, ahmadkhang505@gmail.com'
@@ -63,6 +63,18 @@ pipeline {
                 '''
             }
         }
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DH_USER', passwordVariable: 'DH_TOKEN')]) {
+                    sh '''
+                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                        docker push ${IMAGE}:${BUILD_NUMBER}
+                        docker push ${IMAGE}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
     }
     post {
         always {
@@ -79,6 +91,7 @@ pipeline {
                         <p><b>Job:</b> ${env.JOB_NAME} #${env.BUILD_NUMBER}</p>
                         <p><b>Commit:</b> ${env.GIT_SHA}</p>
                         <p><b>Metrics:</b> <a href="${env.APP_URL}/metrics">${env.APP_URL}/metrics</a></p>
+                        <p><b>Docker Hub image:</b> ${env.IMAGE}:latest</p>
                         <pre>${metrics}</pre>
                     """
                 )
